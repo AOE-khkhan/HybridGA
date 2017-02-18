@@ -1,0 +1,4 @@
+The folder contains the files for Multi-objective hybrid GA implementing 10 bar truss problem.
+The folder also contains a figure showing the pareto front obtained after running the code. 
+Max no of gen = 50
+Pop size = 48
