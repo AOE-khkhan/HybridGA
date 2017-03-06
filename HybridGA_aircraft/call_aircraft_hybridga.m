@@ -1,19 +1,14 @@
-clc;
-clear all;
-close all;
+clc;clear;close all;
 Timestart = tic;
 Start_time=clock;
 format longg;
-matlabpool 8
+% matlabpool 8
 options = goptions([]);
 %x0=ones(48,12); %population X variables - CHECK FOR EVERY CHANGE IN DESIGN VARIABLES/POP. SIZE
 ND0=[];xopt=[];xopt0=[];
 count=0;
 
-%Initial population for GA
-for ii=1:48
-    x0(ii,:) = [9.4;0.159;0.1338;1345.5;25;24200;0;0;0;0;1;1];
-end
+
 
 %Sequence of the design variables
 %Continuous: x_con
@@ -60,6 +55,21 @@ end
     lb_dis = [0 0 0 0 1 1];
     ub_dis = [1 1 1 1 8 8]; %change 8 to 16 
 
+    
+        %Initial population for GA
+     lb  = [lb_con, lb_dis];
+     ub = [ub_con, ub_dis];
+    x0 = zeros(48,12);
+    x0(1,:) = [9.4;0.159;0.1338;1345.5;25;24200;0;0;0;0;1;1];
+    for ii=2:48
+        for jj = 1:size(x0,2)
+            if jj<=6
+                x0(ii,jj) = lb(jj) + rand*(ub(jj)-lb(jj));
+            else
+                x0(ii,jj) = randi([lb_dis(jj-6), ub_dis(jj-6)]);
+            end
+        end
+    end
 num_con = length(lb_con);
 num_dis = length(lb_dis);
    

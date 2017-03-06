@@ -174,9 +174,12 @@ dk=ones(1,8*n);
 %objective values for initial population
 obj_val=zeros(pop_size,2);
 for ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
-    obj_val(ii,:)=objfunc_aircraft(x0(ii,1:num_con),x0(ii,num_con+1:end),flag,count); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
-    funeval=funeval+1;
+    Filename = ['AC_X' num2str(ii)];
+    x_con = x0(ii,1:num_con);
+    x_dis = x0(ii,num_con+1:end);
+    obj_val(ii,:)=objfunc_aircraft(x_con, x_dis,Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
 end
+funeval=funeval+pop_size;
 % obj_val=[(fmin(1)+(fmax(1)-fmin(1))*rand(pop_size,1)),(fmin(2)+(fmax(2)-fmin(2))*rand(pop_size,1))];
 fmin=frac_uto*[min(obj_val(:,1)),min(obj_val(:,2))]; %%%%obj_val(:,1) for function 1 & obj_val(:,2) for function 2
 % Header display
@@ -204,7 +207,7 @@ for generation = 1:max_gen+1,
     if fmin_Cgen(2)<fmin(2)                                                                                                                                          
         fmin(1,2)=fmin_Cgen(2); %%%%dynamic min point - min value replaced                                                                                                                                     
     end     
-    fmin_hist(generation,:)=fmin %history of the fmin
+    fmin_hist(generation,:)=fmin; %history of the fmin
     %Work by Satadru Roy
     %Hybrid Optimization-Multi Search Method
     %Developed by Satadru Roy on January 24,2010
@@ -220,9 +223,10 @@ for generation = 1:max_gen+1,
         Goal=goal;
         cK=ck;
         dK=dk;
-        parfor i=1:pop_size
+        for i=1:pop_size
 %             Model=Model1;
 %             t_st=tic;
+            Filename = ['AC_X' num2str(i)];
             sprintf('%s%d%s%d','Generation:',generation,'  Individual:',i)
             %Keeping discrete variable constant for the SQP process
             xx_pop=XX_pop(i,1:num_con);
@@ -231,16 +235,23 @@ for generation = 1:max_gen+1,
             x_dis=xx_pop1; %Discrete variable sent as parameters. 
             aa=Obj_val(i,:);%;bb=Obj_val(i,2); %%%%obj values of ith gen for both functions 1&2 
 %             goal=goalpointgen(fmin(1),fmax(2),fmax(1),fmin(2),aa(1),aa(2));
+%             disp('foobar2')
             gg=Goal(i,:); %%%%goal values of ith gen for both functions 1&2
             %New addition 12/11/11
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            options=optimset('LargeScale','off','GradObj','off','Algorithm','active-set','MaxFunEvals',300,'UseParallel','always');
-            [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,flag,count),x0_con,gg,weight,[],[],[],[],lb_con,ub_con,@(x_con) constraints_aircraft(x_con,x_dis),options);
-            funeval=funeval+output.funcCount;
-            g_check=constraints_10bar(x_con,x_dis); 
-            if (exitflag>=0 && isempty(find(g_check>1e6))==1)
+            options=[]; %optimset('LargeScale','off','GradObj','off','Algorithm','active-set','MaxFunEvals',300,'UseParallel','always');
+            try
+                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),x0_con,gg,weight,[],[],[],[],lb_con,ub_con,@(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
+            catch
+%                 f = objfunc_aircraft(x_con,x_dis,Filename)
+                    keyboard
+                  disp('\nFailed! Do something!\n')
+            end
+                funeval=funeval+output.funcCount;
+            g_check=constraints_aircraft(x_con,x_dis, Filename); 
+            if (exitflag>=0 && isempty(find(g_check>1e-6))==1)
                 Obj_val(i,:)=fval;  %%%%func value obtained from SQP set as next objective value 
                 X_des(i,:)=[x_con,x_dis];
                 %Applying Lamarckism 

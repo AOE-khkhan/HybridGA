@@ -1,11 +1,9 @@
-function f = objfunc_aircraft(x_con,x_dis,flag,count)
+function f = objfunc_aircraft(x_con,x_dis,Filename)
 
 %calling FLOPS and getting Outputs
 Inputs.seats = 162;
 Inputs.GW = 174200;
 Inputs.DESRNG = 2940;
-
-Filename = 'aircraft_obj';
 
 output = analyze_discrete(x_con,x_dis);
 
@@ -16,17 +14,24 @@ if s==1;
    disp(w); 
 end
 
-Outputs = ReadFLOPSOutput(Filename);
+[Outputs, nan_count] = ReadFLOPSOutput(Filename);
 
-%multi-objective functions
-if isnan(Outputs.FUEL);
-    FUEL = 55000; %high fuel burn as penalty
-else FUEL = Outputs.FUEL;
-end
+if nan_count==0
+    %multi-objective functions
+    if isnan(Outputs.FUEL);
+        FUEL = 55000; %high fuel burn as penalty
+    else
+        FUEL = Outputs.FUEL;
+    end
 
-if isnan(Outputs.NOX);
-    NOX = 450; %high NOX value as penalty
-else NOX = Outputs.NOX;
+    if isnan(Outputs.NOX);
+        NOX = 450; %high NOX value as penalty
+    else
+        NOX = Outputs.NOX;
+    end
+else
+    FUEL = 55000;
+    NOX = 450;
 end
  
 % if isnan(Outputs.FARE)
@@ -39,9 +44,6 @@ end
 %     TOC = 50000; %high fare as penalty
 % else TOC = Outputs.TOC;
 % end
-
-
-count = count + 1; %count of no. of times objfunc is used
 
 % Fitness Functions
 phi1 = FUEL; 
