@@ -15,24 +15,16 @@ if s==1;
    disp(w); 
 end
 
-[Outputs, nan_count] = ReadFLOPSOutput(Filename);
+[Outputs, nan_count, ac_count] = ReadFLOPSOutput(Filename);
 
-if nan_count == 0
-    %constraints
-    if isnan(Outputs.TD);
-        TD = 10000; %high takeoff distance as penalty
-    else TD = Outputs.TD;
-    end
-
-    if isnan(Outputs.LD);
-        LD = 10000; %high landing distance as penalty
-    else LD = Outputs.LD;
-    end
+TD = 10000;
+LD = 10000;
+if nan_count == 0 && ac_count == 4
+	TD = Outputs.TD;
+    LD = Outputs.LD;
 else
-    TD = 10000;
-    LD = 10000;
+%     fprintf('\n%s\n','Mission failed!')
 end
-    
 g(1) = TD/8500 - 1; %take-off distance
 g(2) = LD/7000 - 1; %landing distance
 

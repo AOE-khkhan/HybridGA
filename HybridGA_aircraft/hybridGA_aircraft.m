@@ -1,5 +1,5 @@
 function [xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND,xopt...
-    ,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,~,~,~,~,~,~,~,~,~,~,~,~)
+    ,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org,~,~,~,~,~,~,~,~,~,~,~,~)
 %GENETIC minimizes a fitness function using a simple genetic algorithm.
 %
 %	X=GENETIC('FUN',X0,OPTIONS,VLB,VUB) uses a simple (haploid) 
@@ -173,11 +173,11 @@ dk=ones(1,8*n);
 %x_con = x0(ii,1:num_con); x_dis = x0(ii,num_con+1:end);
 %objective values for initial population
 obj_val=zeros(pop_size,2);
-for ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
-    Filename = ['AC_X' num2str(ii)];
-    x_con = x0(ii,1:num_con);
-    x_dis = x0(ii,num_con+1:end);
-    obj_val(ii,:)=objfunc_aircraft(x_con, x_dis,Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
+parfor ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
+    Filename = [Filename_org num2str(ii)];
+    x_con0 = x0(ii,1:num_con);
+    x_dis0 = x0(ii,num_con+1:end);
+    obj_val(ii,:)=objfunc_aircraft(x_con0, x_dis0,Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
 end
 funeval=funeval+pop_size;
 % obj_val=[(fmin(1)+(fmax(1)-fmin(1))*rand(pop_size,1)),(fmin(2)+(fmax(2)-fmin(2))*rand(pop_size,1))];
@@ -223,11 +223,11 @@ for generation = 1:max_gen+1,
         Goal=goal;
         cK=ck;
         dK=dk;
-        for i=1:pop_size
+        parfor i=1:pop_size
 %             Model=Model1;
 %             t_st=tic;
-            Filename = ['AC_X' num2str(i)];
-            sprintf('%s%d%s%d','Generation:',generation,'  Individual:',i)
+            Filename = [Filename_org num2str(i)];
+            fprintf('%s%d%s%d','Generation:',generation,'  Individual:',i)
             %Keeping discrete variable constant for the SQP process
             xx_pop=XX_pop(i,1:num_con);
             xx_pop1=XX_pop(i,num_con+1:end);
@@ -241,9 +241,12 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            options=[]; %optimset('LargeScale','off','GradObj','off','Algorithm','active-set','MaxFunEvals',300,'UseParallel','always');
+            options = []; %optimset('Display','iter','Algorithm','active-set');
+%             options = optimset('Algorithm','active-set'); %For parfor
             try
-                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),x0_con,gg,weight,[],[],[],[],lb_con,ub_con,@(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
+                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),...
+                    x0_con,gg,weight,[],[],[],[],lb_con,ub_con,...
+                    @(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
             catch
 %                 f = objfunc_aircraft(x_con,x_dis,Filename)
                     keyboard
@@ -284,7 +287,7 @@ for generation = 1:max_gen+1,
                 old_gen(i,:)=ccc;
                 
             else
-                Obj_val(i,:)=1e15; %%%%exitflag~=0; apply high value
+                Obj_val(i,:)=[1e5,1e3]; %%%%exitflag~=0; apply high value
             end
 %             t_end=toc(t_st);
 %             time_left=(((max_gen+1)*pop_size*t_end)-(generation*i*t_end))/3600;

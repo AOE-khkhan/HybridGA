@@ -2,6 +2,8 @@ clc;clear;close all;
 Timestart = tic;
 Start_time=clock;
 format longg;
+
+Filename_org = 'OutputFiles/AC_X';
 % matlabpool 8
 options = goptions([]);
 %x0=ones(48,12); %population X variables - CHECK FOR EVERY CHANGE IN DESIGN VARIABLES/POP. SIZE
@@ -83,37 +85,40 @@ fmin = [8000, 2]; fmax=[100000, 500];       %1: Fuel burn VS NOX
 
 flag = 1;
 
-[xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND0,xopt,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count)
+[xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND0,xopt,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org)
 
 ToTFunc=ToTFunc+funeval;
 
+cd OutputFiles
+save('Results.mat','xopt','ND','funeval','lgen','fmin_hist')
+cd ..
 % %Write results in text file
 % Filename='output_aircraft';
 % WriteResults(ToTFunc,xopt,ND,Filename)
 
-%Write results in text file
-Filename='output_aircraft';
-WriteResults(ToTFunc,xopt,ND,Filename)
-A = ToTFunc;
-B = xopt;
-C = ND;
-fid=fopen('output_10bar.txt','w');
-fprintf(fid, '%f\n',A);
-fprintf(fid, '%f\n',B);
-fprintf(fid, '%f\n',C);
-fclose(fid);
+% %Write results in text file
+% Filename='output_aircraft';
+% WriteResults(ToTFunc,xopt,ND,Filename)
+% A = ToTFunc;
+% B = xopt;
+% C = ND;
+% fid=fopen('output_10bar.txt','w');
+% fprintf(fid, '%f\n',A);
+% fprintf(fid, '%f\n',B);
+% fprintf(fid, '%f\n',C);
+% fclose(fid);
+% 
+% %Sending an email upon completion
+% % string='Lam Max_gen=50, pop_size=50, obj_pair=3';
+% % sendemail(string)
+% Start_time
+% End_time=clock
+% Run_time = toc(Timestart)
+% 
+% %pareto front plot
+% figure
+% plot(ND(:,1),ND(:,2),'k.');
+% xlabel('f_1')
+% ylabel('f_2')
 
-%Sending an email upon completion
-% string='Lam Max_gen=50, pop_size=50, obj_pair=3';
-% sendemail(string)
-Start_time
-End_time=clock
-Run_time = toc(Timestart)
-
-%pareto front plot
-figure
-plot(ND(:,1),ND(:,2),'k.');
-xlabel('f_1')
-ylabel('f_2')
-
-matlabpool close
+% matlabpool close

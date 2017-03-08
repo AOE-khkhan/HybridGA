@@ -14,39 +14,19 @@ if s==1;
    disp(w); 
 end
 
-[Outputs, nan_count] = ReadFLOPSOutput(Filename);
+[Outputs,nan_count,ac_count] = ReadFLOPSOutput(Filename);
 
-if nan_count==0
+FUEL = 55000;
+NOX = 650;
+if nan_count==0 && ac_count == 4
     %multi-objective functions
-    if isnan(Outputs.FUEL);
-        FUEL = 55000; %high fuel burn as penalty
-    else
-        FUEL = Outputs.FUEL;
-    end
-
-    if isnan(Outputs.NOX);
-        NOX = 450; %high NOX value as penalty
-    else
-        NOX = Outputs.NOX;
-    end
+    FUEL = Outputs.FUEL;
+    NOX = Outputs.NOX;
 else
-    FUEL = 55000;
-    NOX = 450;
+%     fprintf('\n%s\n','Mission failed!')
 end
- 
-% if isnan(Outputs.FARE)
-%     FARE = 450; %high fare as penalty
-% else FARE = Outputs.FARE;
-% end
-
-% %check
-% if isnan(Outputs.TOC);
-%     TOC = 50000; %high fare as penalty
-% else TOC = Outputs.TOC;
-% end
-
 % Fitness Functions
-phi1 = FUEL; 
+phi1 = FUEL;
 phi2 = NOX;
 %phi3 = FARE;
 
