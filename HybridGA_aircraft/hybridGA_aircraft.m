@@ -287,7 +287,7 @@ for generation = 1:max_gen+1,
                 old_gen(i,:)=ccc;
                 
             else
-                Obj_val(i,:)=[1e5,1e3]; %%%%exitflag~=0; apply high value
+                Obj_val(i,:)=1e10; %%%%exitflag~=0; apply high value
             end
 %             t_end=toc(t_st);
 %             time_left=(((max_gen+1)*pop_size*t_end)-(generation*i*t_end))/3600;
