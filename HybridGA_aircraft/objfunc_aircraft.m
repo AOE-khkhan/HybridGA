@@ -18,16 +18,18 @@ end
 
 FUEL = 55000;
 NOX = 650;
+FARE = 1e3;
 if nan_count==0 && ac_count == 4
     %multi-objective functions
     FUEL = Outputs.FUEL;
     NOX = Outputs.NOX;
+    FARE = Outputs.FARE;
 else
 %     fprintf('\n%s\n','Mission failed!')
 end
 % Fitness Functions
 phi1 = FUEL;
-phi2 = NOX;
+phi2 = FARE;
 %phi3 = FARE;
 
 %phi4 = TOC;

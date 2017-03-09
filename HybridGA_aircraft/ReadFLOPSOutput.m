@@ -70,7 +70,7 @@ while ~feof(fid) && nan_count==0
                 [FUEL,~,~,TD,LD,AMFOR,SSFOR] = textread(fname,'%f%f%f%f%f%f%f',1,'headerlines',nlines+2);
                 count = 1;
 				if isnan(FUEL) == 1 || isnan(TD)==1 || isnan(LD) == 1
-					nan_count=non_count+1;
+					nan_count=nan_count+1;
 					break
 				end
             catch

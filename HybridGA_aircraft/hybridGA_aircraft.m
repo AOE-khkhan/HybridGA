@@ -224,6 +224,7 @@ for generation = 1:max_gen+1,
         cK=ck;
         dK=dk;
         parfor i=1:pop_size
+%         for i=1:pop_size
 %             Model=Model1;
 %             t_st=tic;
             Filename = [Filename_org num2str(i)];
@@ -241,12 +242,16 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            options = []; %optimset('Display','iter','Algorithm','active-set');
+            x0_con
+            options = optimset('FinDiffType','forward','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
 %             options = optimset('Algorithm','active-set'); %For parfor
             try
                 [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),...
                     x0_con,gg,weight,[],[],[],[],lb_con,ub_con,...
                     @(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
+                x_con
+                fval
+%                 keyboard
             catch
 %                 f = objfunc_aircraft(x_con,x_dis,Filename)
                     keyboard
