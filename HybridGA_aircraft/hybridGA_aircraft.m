@@ -176,8 +176,9 @@ obj_val=zeros(pop_size,2);
 parfor ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
     Filename = [Filename_org num2str(ii)];
     x_con0 = x0(ii,1:num_con);
+    x_con0_hat = (x_con0 - lb_con)./(ub_con-lb_con);
     x_dis0 = x0(ii,num_con+1:end);
-    obj_val(ii,:)=objfunc_aircraft(x_con0, x_dis0,Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
+    obj_val(ii,:)=objfunc_aircraft(x_con0_hat, x_dis0,lb_con, ub_con, Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
 end
 funeval=funeval+pop_size;
 % obj_val=[(fmin(1)+(fmax(1)-fmin(1))*rand(pop_size,1)),(fmin(2)+(fmax(2)-fmin(2))*rand(pop_size,1))];
@@ -242,39 +243,26 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            x_dis
-            x0_con
-            
-            for k=1:num_con
-                x_con(k) = (x0_con(k) - lb_con(k))/(ub_con(k) - lb_con(k)); %Normalize the continuous variables
-            end
-            x_con
-            options = optimset('FinDiffType','forward','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
+            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con);
+            lb_con_hat = zeros(num_con,1);
+            ub_con_hat = ones(num_con,1);
+            options = optimset('Display','off','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
 %             options = optimset('Algorithm','active-set'); %For parfor
             try
-                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),...
-                    x0_con,gg,weight,[],[],[],[],lb_con,ub_con,...
-                    @(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
-                
-%                 for kk = num_con
-%                     lb_con_org = [8 0.1 0.09 1000 0 20000];
-%                     ub_con_org = [12 0.5 0.17 1500 40 30000];
-%                     x_con(kk) = (x_con(kk) - lb_con_org)/(ub_con_org - lb_con_org);
-%                 end
-                x_con
-                for kk=1:num_con
-                    x_con(kk) = (x_con(kk) - lb_con(kk))/(ub_con(kk) - lb_con(kk)); %Normalize the continuous variables
-                end
-                x_con
+                [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
+                    x0_con_hat,gg,weight,[],[],[],[],lb_con_hat,ub_con_hat,...
+                    @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options);
+                x0_con
+                x_con = lb_con + x_con_hat.*(ub_con - lb_con)
                 fval
-%                  keyboard
+%                 keyboard
             catch
 %                 f = objfunc_aircraft(x_con,x_dis,Filename)
-                    %keyboard
-                  disp('\nFailed! Do something!\n')
+                    keyboard
+                  disp('\nFailed! This should not happen!\n')
             end
                 funeval=funeval+output.funcCount;
-            g_check=constraints_aircraft(x_con,x_dis, Filename); 
+            g_check=constraints_aircraft(x_con_hat,x_dis, lb_con, ub_con, Filename); 
             if (exitflag>=0 && isempty(find(g_check>1e-6))==1)
                 Obj_val(i,:)=fval;  %%%%func value obtained from SQP set as next objective value 
                 X_des(i,:)=[x_con,x_dis];
@@ -313,10 +301,6 @@ for generation = 1:max_gen+1,
 %             t_end=toc(t_st);
 %             time_left=(((max_gen+1)*pop_size*t_end)-(generation*i*t_end))/3600;
 %             sprintf('%s%f','Estimated time to complete (hrs): ',time_left)
-            for jj = 1:length(lb_con)
-                x_con(jj) =   x_con(jj)*(ub_con(jj) - lb_con(jj)) + lb_con(jj);
-            end
-            x_con
         end
         obj_val=Obj_val;
         x_des=X_des;
@@ -639,8 +623,6 @@ if (new_gen(2*i,38:41)==forbid4)
     position=randi([1,2]);
     new_gen(2*i,37+position)=abs(new_gen(2*i,37+position)-1);
 end
-
-
 
 % %Supress output 0 in Laminar flow tech
 % if (sum(new_gen(2*i-1,56:57))==0)

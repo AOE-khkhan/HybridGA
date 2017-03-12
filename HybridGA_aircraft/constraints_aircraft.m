@@ -1,16 +1,14 @@
-function [g, h] = constraints_aircraft(x_con,x_dis, Filename)
+function [g, h] = constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename)
 %counter=0;
+if size(x_con_hat,1)>1
+    x_con_hat = x_con_hat';
+end
+x_con = lb_con + x_con_hat.*(ub_con-lb_con);
 
 %calling FLOPS and getting Outputs
 Inputs.seats = 162;
 Inputs.GW = 174200;
 Inputs.DESRNG = 2940;
-
-lb_con = [8 0.1 0.09 1000 0 20000]; %Lower bounds for the continuous design variables
-ub_con = [12 0.5 0.17 1500 40 30000]; %Upper bound for the continuous design variables
-for jj = 1:length(lb_con)
-    x_con(jj) =   x_con(jj)*(ub_con(jj) - lb_con(jj)) + lb_con(jj);
-end
 
 output = analyze_discrete(x_con,x_dis);
 

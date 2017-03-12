@@ -20,14 +20,12 @@ count=0;
     %4. Wing area[ft^2] S (5 bits res=16.13)
     %5. Wing sweep at 25% chord[deg] Sweep (5 bits res 1.29)
     %6. Thrust per engine[lbs] Thrust (5 bits res 322.581)
-    bits_con = [5 5 5 5 5 5]; %Bits for continuous variable
-    lb_con = [8 0.1 0.09 1000 0 20000]; %Actual Lower bounds-continuous
-    ub_con = [12 0.5 0.17 1500 40 30000]; %Actual Upper bound-continuous
-%     lb_con = [0 0 0 0 0 0]; %Normalized Lower bounds-continuous design variables
-%     ub_con = [1 1 1 1 1 1]; %Normalized Upper bound-continuous design variables
-   
+    bits_con = [5 5 5 5 5 5 5 5 6 4]; %Bits for continuous variable
+    % Make sure bounds are are always row vectors
+    %x_con(7)=BPR;x_con(8)=TIT;x_con(9)=OPR;x_con(10)=FPR;
+    lb_con = [8 0.1 0.09 1000 0 20000 0 0 0 0]; %Lower bounds for the continuous design variables
+    ub_con = [12 0.5 0.17 1500 40 30000 10 500 20 0.1]; %Upper bound for the continuous design variables
     
-       
 %Discrete: x_dis 
     % 1. Composites: x_dis(1:4)
     %    1 - 0/1 for wing
@@ -52,27 +50,31 @@ count=0;
     %    6 - HLFC wing + nacelle
     %    7 - HLFC wing + tail 
     %    8 - HLFC tail + nacelle
-    %%%%will be implemented later:
     %    9 - HLFC wing+tail+nacelle
     %   10 - NLF wing + HLFC tail
     %   11 - NLF wing + HLFC nacelle
     %   12 - NLF wing + HLFC tail + HLFC nacelle
-    bits_dis = [1 1 1 1 3 4]; %change 3bits to 4bits
-    lb_dis = [0 0 0 0 1 1];
-    ub_dis = [1 1 1 1 8 16]; %change 8 to 16 
+    % 4. Engine Technologies
+    %    1 - DDF
+    %    2 - GTF
+    %    3 - CRTF
+    %    4 - OR
+    bits_dis = [1 1 1 1 3 4 2]; %change 3bits to 4bits
+    lb_dis = [0 0 0 0 1 1 1];
+    ub_dis = [1 1 1 1 8 16 4]; %change 8 to 16 
 
     
-        %Initial population for GA
-     lb  = [lb_con, lb_dis];
-     ub = [ub_con, ub_dis];
-    x0 = zeros(48,12);
-    x0(1,:) = [9.4;0.159;0.1338;1345.5;25;24200;0;0;0;0;1;1];
+    % Initial population for GA
+    lb  = [lb_con, lb_dis];
+    ub = [ub_con, ub_dis];
+    x0 = zeros(48,17);
+    x0(1,:) = [9.4;0.159;0.1338;1345.5;25;24200;5;250;10;0.05;0;0;0;0;1;1;1];
     for ii=2:48
         for jj = 1:size(x0,2)
-            if jj<=6
+            if jj<=10
                 x0(ii,jj) = lb(jj) + rand*(ub(jj)-lb(jj));
             else
-                x0(ii,jj) = randi([lb_dis(jj-6), ub_dis(jj-6)]);
+                x0(ii,jj) = randi([lb_dis(jj-10), ub_dis(jj-10)]);
             end
         end
     end
@@ -84,7 +86,7 @@ ToTFunc = 0;
 %pair=3; %Select the objective pair
 
 %fmin = [8000, 2]; fmax=[100000, 500];       %1: Fuel burn VS NOX
-fmin = [8000, 100]; fmax=[100000, 1000];  %2: Fuel burn VS TicketPrice
+fmin = [8000, 10000]; fmax=[100000, 1000000];  %2: Fuel burn VS TOC
 % fmin=[2, 100]; fmax=[500, 1000];          %3: NOX VS TicketPrice
 
 flag = 1;
@@ -115,10 +117,10 @@ cd ..
 % %Sending an email upon completion
 % % string='Lam Max_gen=50, pop_size=50, obj_pair=3';
 % % sendemail(string)
-Start_time
-End_time=clock
-Run_time = toc(Timestart)
-
+% Start_time
+% End_time=clock
+% Run_time = toc(Timestart)
+% 
 % %pareto front plot
 % figure
 % plot(ND(:,1),ND(:,2),'k.');
