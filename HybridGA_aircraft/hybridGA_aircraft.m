@@ -176,8 +176,9 @@ obj_val=zeros(pop_size,2);
 parfor ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
     Filename = [Filename_org num2str(ii)];
     x_con0 = x0(ii,1:num_con);
+    x_con0_hat = (x_con0 - lb_con)./(ub_con-lb_con);
     x_dis0 = x0(ii,num_con+1:end);
-    obj_val(ii,:)=objfunc_aircraft(x_con0, x_dis0,Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
+    obj_val(ii,:)=objfunc_aircraft(x_con0_hat, x_dis0,lb_con, ub_con, Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
 end
 funeval=funeval+pop_size;
 % obj_val=[(fmin(1)+(fmax(1)-fmin(1))*rand(pop_size,1)),(fmin(2)+(fmax(2)-fmin(2))*rand(pop_size,1))];
@@ -223,8 +224,8 @@ for generation = 1:max_gen+1,
         Goal=goal;
         cK=ck;
         dK=dk;
-        parfor i=1:pop_size
-%         for i=1:pop_size
+%         parfor i=1:pop_size
+        for i=1:pop_size
 %             Model=Model1;
 %             t_st=tic;
             Filename = [Filename_org num2str(i)];
@@ -242,23 +243,26 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            x0_con
-            options = optimset('FinDiffType','forward','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
+            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con);
+            lb_con_hat = zeros(num_con,1);
+            ub_con_hat = ones(num_con,1);
+            options = optimset('Display','off','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
 %             options = optimset('Algorithm','active-set'); %For parfor
             try
-                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,Filename),...
-                    x0_con,gg,weight,[],[],[],[],lb_con,ub_con,...
-                    @(x_con) constraints_aircraft(x_con,x_dis, Filename),options);
-                x_con
+                [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
+                    x0_con_hat,gg,weight,[],[],[],[],lb_con_hat,ub_con_hat,...
+                    @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options);
+                x0_con
+                x_con = lb_con + x_con_hat.*(ub_con - lb_con)
                 fval
 %                 keyboard
             catch
 %                 f = objfunc_aircraft(x_con,x_dis,Filename)
                     keyboard
-                  disp('\nFailed! Do something!\n')
+                  disp('\nFailed! This should not happen!\n')
             end
                 funeval=funeval+output.funcCount;
-            g_check=constraints_aircraft(x_con,x_dis, Filename); 
+            g_check=constraints_aircraft(x_con_hat,x_dis, lb_con, ub_con, Filename); 
             if (exitflag>=0 && isempty(find(g_check>1e-6))==1)
                 Obj_val(i,:)=fval;  %%%%func value obtained from SQP set as next objective value 
                 X_des(i,:)=[x_con,x_dis];

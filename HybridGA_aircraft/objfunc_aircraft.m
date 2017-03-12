@@ -1,4 +1,8 @@
-function f = objfunc_aircraft(x_con,x_dis,Filename)
+function f = objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename)
+if size(x_con_hat,1)>1
+    x_con_hat = x_con_hat';
+end
+x_con = lb_con + x_con_hat.*(ub_con-lb_con);
 
 %calling FLOPS and getting Outputs
 Inputs.seats = 162;

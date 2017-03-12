@@ -21,6 +21,7 @@ count=0;
     %5. Wing sweep at 25% chord[deg] Sweep (5 bits res 1.29)
     %6. Thrust per engine[lbs] Thrust (5 bits res 322.581)
     bits_con = [5 5 5 5 5 5]; %Bits for continuous variable
+    % Make sure bounds are are always row vectors
     lb_con = [8 0.1 0.09 1000 0 20000]; %Lower bounds for the continuous design variables
     ub_con = [12 0.5 0.17 1500 40 30000]; %Upper bound for the continuous design variables
     
@@ -58,9 +59,9 @@ count=0;
     ub_dis = [1 1 1 1 8 8]; %change 8 to 16 
 
     
-        %Initial population for GA
-     lb  = [lb_con, lb_dis];
-     ub = [ub_con, ub_dis];
+    % Initial population for GA
+    lb  = [lb_con, lb_dis];
+    ub = [ub_con, ub_dis];
     x0 = zeros(48,12);
     x0(1,:) = [9.4;0.159;0.1338;1345.5;25;24200;0;0;0;0;1;1];
     for ii=2:48
