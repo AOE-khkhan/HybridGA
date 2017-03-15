@@ -243,7 +243,7 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con);
+            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con)
             lb_con_hat = zeros(num_con,1);
             ub_con_hat = ones(num_con,1);
             options = optimset('Display','off','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
@@ -251,9 +251,9 @@ for generation = 1:max_gen+1,
             try
                 [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
                     x0_con_hat,gg,weight,[],[],[],[],lb_con_hat,ub_con_hat,...
-                    @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options);
+                    @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options)
                 x0_con
-                x_con = lb_con + x_con_hat.*(ub_con - lb_con)
+                x_con = lb_con + x_con_hat.*(ub_con - lb_con);
                 fval
 %                 keyboard
             catch
@@ -261,7 +261,8 @@ for generation = 1:max_gen+1,
                     keyboard
                   disp('\nFailed! This should not happen!\n')
             end
-                funeval=funeval+output.funcCount;
+            x_con
+            funeval=funeval+output.funcCount
             g_check=constraints_aircraft(x_con_hat,x_dis, lb_con, ub_con, Filename); 
             if (exitflag>=0 && isempty(find(g_check>1e-6))==1)
                 Obj_val(i,:)=fval;  %%%%func value obtained from SQP set as next objective value 
@@ -584,44 +585,44 @@ for i = 1:size(sites,1),
 
 %Genetically tailored new generation to account for discrete technologies for aircraft sizing
 %forbid = [0 0 1];
-forbid1 = [1 1 0 0];
-forbid2 = [1 1 0 1];
-forbid3 = [1 1 1 0];
-forbid4 = [1 1 1 1];
+forbid1 = [1 0 1 0]; %13
+forbid2 = [1 0 1 1]; %14
+forbid3 = [1 0 0 1]; %15
+forbid4 = [1 0 0 0]; %16
 
 %Supress output 13, 14, 15 & 16 in LF technology
-if (new_gen(2*i-1,38:41)==forbid1) 
+if (new_gen(2*i-1,58:61)==forbid1) 
     position=randi([1,2]);
-    new_gen(2*i-1,37+position)=abs(new_gen(2*i-1,37+position)-1);
+    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
 end
-if (new_gen(2*i-1,38:41)==forbid2) 
+if (new_gen(2*i-1,58:61)==forbid2) 
     position=randi([1,2]);
-    new_gen(2*i-1,37+position)=abs(new_gen(2*i-1,37+position)-1);
+    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
 end
-if (new_gen(2*i-1,38:41)==forbid3) 
+if (new_gen(2*i-1,58:61)==forbid3) 
     position=randi([1,2]);
-    new_gen(2*i-1,37+position)=abs(new_gen(2*i-1,37+position)-1);
+    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
 end
-if (new_gen(2*i-1,38:41)==forbid4) 
+if (new_gen(2*i-1,58:61)==forbid4) 
     position=randi([1,2]);
-    new_gen(2*i-1,37+position)=abs(new_gen(2*i-1,37+position)-1);
+    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
 end
 
-if (new_gen(2*i,38:41)==forbid1)
+if (new_gen(2*i,58:61)==forbid1)
     position=randi([1,2]);
-    new_gen(2*i,37+position)=abs(new_gen(2*i,37+position)-1);
+    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
 end
-if (new_gen(2*i,38:41)==forbid2)
+if (new_gen(2*i,58:61)==forbid2)
     position=randi([1,2]);
-    new_gen(2*i,37+position)=abs(new_gen(2*i,37+position)-1);
+    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
 end
-if (new_gen(2*i,38:41)==forbid3)
+if (new_gen(2*i,58:61)==forbid3)
     position=randi([1,2]);
-    new_gen(2*i,37+position)=abs(new_gen(2*i,37+position)-1);
+    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
 end
-if (new_gen(2*i,38:41)==forbid4)
+if (new_gen(2*i,58:61)==forbid4)
     position=randi([1,2]);
-    new_gen(2*i,37+position)=abs(new_gen(2*i,37+position)-1);
+    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
 end
 
 % %Supress output 0 in Laminar flow tech

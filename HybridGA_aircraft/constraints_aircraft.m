@@ -23,7 +23,7 @@ end
 
 TD = 10000;
 LD = 10000;
-if nan_count == 0 && ac_count == 4
+if nan_count == 0 && ac_count == 3
 	TD = Outputs.TD;
     LD = Outputs.LD;
 else

@@ -21,21 +21,21 @@ end
 [Outputs,nan_count,ac_count] = ReadFLOPSOutput(Filename);
 
 FUEL = 55000;
-%NOX = 650;
-TOC = 1e5;
-if nan_count==0 && ac_count == 4
+NOX = 1000;
+%TOC = 1e5;
+if nan_count==0 && ac_count == 3
     %multi-objective functions
     FUEL = Outputs.FUEL;
-    TOC = Outputs.TOC;
-    %NOX = Outputs.NOX;
+    %TOC = Outputs.TOC;
+    NOX = Outputs.NOX;
 else
 %     fprintf('\n%s\n','Mission failed!')
 end
 % Fitness Functions
 phi1 = FUEL;
-%phi2 = NOX;
-phi3 = TOC;
+phi2 = NOX;
+%phi3 = TOC;
 
-f = [phi1 phi3]; %1. Fuel burn vs TOC
-%f = [phi1 phi2]; %1. fuel burn vs NOx
+%f = [phi1 phi3]; %1. Fuel burn vs TOC
+f = [phi1 phi2]; %1. Fuel burn vs NOx
 %f = [phi2 phi3]; %3. NOx vs TOC

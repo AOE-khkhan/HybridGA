@@ -85,8 +85,8 @@ ToTFunc = 0;
  
 %pair=3; %Select the objective pair
 
-%fmin = [8000, 2]; fmax=[100000, 500];       %1: Fuel burn VS NOX
-fmin = [8000, 10000]; fmax=[100000, 1000000];  %2: Fuel burn VS TOC
+fmin = [8000, 2]; fmax=[100000, 1000];       %1: Fuel burn VS NOX
+%fmin = [8000, 10000]; fmax=[100000, 1000000];  %2: Fuel burn VS TOC
 % fmin=[2, 100]; fmax=[500, 1000];          %3: NOX VS TicketPrice
 
 flag = 1;
