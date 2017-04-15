@@ -20,11 +20,11 @@ count=0;
     %4. Wing area[ft^2] S (5 bits res=16.13)
     %5. Wing sweep at 25% chord[deg] Sweep (5 bits res 1.29)
     %6. Thrust per engine[lbs] Thrust (5 bits res 322.581)
-    bits_con = [5 5 5 5 5 5 5 5 6 4]; %Bits for continuous variable
+    bits_con = [5 5 5 5 5 5 5 5 5 5]; %Bits for continuous variable
     % Make sure bounds are are always row vectors
     %x_con(7)=BPR;x_con(8)=TIT;x_con(9)=OPR;x_con(10)=FPR;
     lb_con = [8 0.1 0.09 1000 0 20000 0 0 0 0]; %Lower bounds for the continuous design variables
-    ub_con = [12 0.5 0.17 1500 40 30000 10 500 20 0.1]; %Upper bound for the continuous design variables
+    ub_con = [12 0.5 0.17 1500 40 30000 10 770 20 0.4]; %Upper bound for the continuous design variables
     
 %Discrete: x_dis 
     % 1. Composites: x_dis(1:4)
@@ -57,12 +57,12 @@ count=0;
     % 4. Engine Technologies
     %    1 - DDF
     %    2 - GTF
-    %    3 - CRTF
+    %    3 - CRTF/CRR
     %    4 - OR
-    bits_dis = [1 1 1 1 3 4 2]; %change 3bits to 4bits
+    bits_dis = [1 1 1 1 3 4 2];
     lb_dis = [0 0 0 0 1 1 1];
-    ub_dis = [1 1 1 1 8 16 4]; %change 8 to 16 
-
+    ub_dis = [1 1 1 1 8 16 4]; 
+    dis_cases = [2 2 2 2 8 12 4]; %ENTER NO. OF CASES BEING INPUT FOR EACH DISCRETE VARIABLE
     
     % Initial population for GA
     lb  = [lb_con, lb_dis];
@@ -91,7 +91,8 @@ fmin = [8000, 2]; fmax=[100000, 1000];       %1: Fuel burn VS NOX
 
 flag = 1;
 
-[xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND0,xopt,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org)
+[xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND0,xopt,options,...
+    lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org,dis_cases)
 
 ToTFunc=ToTFunc+funeval;
 

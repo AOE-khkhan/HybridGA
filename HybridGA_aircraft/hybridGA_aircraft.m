@@ -1,5 +1,5 @@
 function [xopt,ND,funeval,lgen,fmin_hist] = hybridGA_aircraft(x0,ND,xopt...
-    ,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org,~,~,~,~,~,~,~,~,~,~,~,~)
+    ,options,lb_con,ub_con,bits_con,lb_dis,ub_dis,bits_dis,fmin,flag,count,Filename_org,dis_cases,~,~,~,~,~,~,~,~,~,~,~)
 %GENETIC minimizes a fitness function using a simple genetic algorithm.
 %
 %	X=GENETIC('FUN',X0,OPTIONS,VLB,VUB) uses a simple (haploid) 
@@ -176,9 +176,10 @@ obj_val=zeros(pop_size,2);
 parfor ii=1:pop_size     %%%%initial obj val-both functions & continuous & discrete
     Filename = [Filename_org num2str(ii)];
     x_con0 = x0(ii,1:num_con);
-    x_con0_hat = (x_con0 - lb_con)./(ub_con-lb_con);
+%    x_con0_hat = (x_con0 - lb_con)./(ub_con-lb_con);
     x_dis0 = x0(ii,num_con+1:end);
-    obj_val(ii,:)=objfunc_aircraft(x_con0_hat, x_dis0,lb_con, ub_con, Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
+%    obj_val(ii,:)=objfunc_aircraft(x_con0_hat, x_dis0,lb_con, ub_con, Filename); %%%%TRY BY NOT USING INITIAL FILE BY REPLACING x0(ii,1:num_variables) BY ORG. CODE
+    obj_val(ii,:)=objfunc_aircraft(x_con0,x_dis0,lb_con,ub_con,Filename);
 end
 funeval=funeval+pop_size;
 % obj_val=[(fmin(1)+(fmax(1)-fmin(1))*rand(pop_size,1)),(fmin(2)+(fmax(2)-fmin(2))*rand(pop_size,1))];
@@ -243,17 +244,23 @@ for generation = 1:max_gen+1,
             w1=cK(i)*abs(gg(1));
             w2=dK(i)*abs(gg(2));
             weight=[w1 w2];
-            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con)
-            lb_con_hat = zeros(num_con,1);
-            ub_con_hat = ones(num_con,1);
-            options = optimset('Display','off','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
-%             options = optimset('Algorithm','active-set'); %For parfor
+%            x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con)
+%            lb_con_hat = zeros(num_con,1);
+%            ub_con_hat = ones(num_con,1);
+%            options = optimset('Display','off','FinDiffRelStep',5e-3); 
+%            options = optimset('Algorithm','active-set');  %For parfor; optimset('Display','iter','Algorithm','active-set');
+%            options = optimset('LargeScale','off','GradObj','off','Algorithm','active-set','UseParallel','always');
+%            options = optimset('LargeScale','off','GradObj','off','Algorithm','active-set');
+            options=optimset('Display','iter','ScaleProblem','obj-and-constr','FinDiffRelStep',1e-3,'Algorithm','sqp');
             try
-                [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
-                    x0_con_hat,gg,weight,[],[],[],[],lb_con_hat,ub_con_hat,...
-                    @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options)
+%               [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
+%                   x0_con_hat,gg,weight,[],[],[],[],lb_con_hat,ub_con_hat,...
+%                   @(x_con_hat) constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename),options)
+                [x_con,fval,~,exitflag,output]=fgoalattain(@(x_con) objfunc_aircraft(x_con,x_dis,lb_con,ub_con,Filename),...
+                    x0_con,gg,weight,[],[],[],[],lb_con,ub_con,...
+                    @(x_con) constraints_aircraft(x_con,x_dis,lb_con,ub_con,Filename),options)
                 x0_con
-                x_con = lb_con + x_con_hat.*(ub_con - lb_con);
+%                 x_con = lb_con + x_con_hat.*(ub_con - lb_con);
                 fval
 %                 keyboard
             catch
@@ -263,7 +270,8 @@ for generation = 1:max_gen+1,
             end
             x_con
             funeval=funeval+output.funcCount
-            g_check=constraints_aircraft(x_con_hat,x_dis, lb_con, ub_con, Filename); 
+%           g_check=constraints_aircraft(x_con_hat,x_dis, lb_con, ub_con, Filename); 
+            g_check=constraints_aircraft(x_con,x_dis,lb_con,ub_con,Filename); 
             if (exitflag>=0 && isempty(find(g_check>1e-6))==1)
                 Obj_val(i,:)=fval;  %%%%func value obtained from SQP set as next objective value 
                 X_des(i,:)=[x_con,x_dis];
@@ -383,7 +391,7 @@ for generation = 1:max_gen+1,
     %Generating the new goal points
     goal=goalpointgen_new(obj_val,fmin);
     % Crossover
-    new_gen = uniformx(new_gen,Pc);
+    new_gen = uniformx(old_gen,Pc,bits_con,bits_dis,dis_cases);
     
     % Always save last generation.  This allows user to cancel and
     % restart with x0 = lgen
@@ -567,7 +575,7 @@ new_gen = old_gen(index,:);
 % end shuffle
 
 
-function [new_gen,sites] = uniformx(old_gen,Pc)
+function [new_gen,sites] = uniformx(old_gen,Pc,bits_con,bits_dis,dis_cases)
 %UNIFORMX Creates a NEW_GEN from OLD_GEN using uniform crossover.
 %	  [NEW_GEN,SITES] = UNIFORMX(OLD_GEN,Pc) performs uniform crossover
 %         on consecutive pairs of OLD_GEN with probability Pc.
@@ -584,79 +592,426 @@ for i = 1:size(sites,1),
 2*i-1],find(sites(i,:)));
 
 %Genetically tailored new generation to account for discrete technologies for aircraft sizing
-%forbid = [0 0 1];
-forbid1 = [1 0 1 0]; %13
-forbid2 = [1 0 1 1]; %14
-forbid3 = [1 0 0 1]; %15
-forbid4 = [1 0 0 0]; %16
+% Work by Samarth Jain 03/14/17
+%NUMBER OF DISCRETE CASES INPUT FOR EACH DISCRETE VARIABLE
 
-%Supress output 13, 14, 15 & 16 in LF technology
-if (new_gen(2*i-1,58:61)==forbid1) 
-    position=randi([1,2]);
-    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
+%sum of bits till nth discrete variable
+for x=1:length(bits_dis)
+    if x<2
+        s(x) = sum(bits_con) + 1;
+    else
+        s(x) = sum(bits_con) + sum(bits_dis(1:x-1)) + 1;
+    end
 end
-if (new_gen(2*i-1,58:61)==forbid2) 
-    position=randi([1,2]);
-    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
-end
-if (new_gen(2*i-1,58:61)==forbid3) 
-    position=randi([1,2]);
-    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
-end
-if (new_gen(2*i-1,58:61)==forbid4) 
-    position=randi([1,2]);
-    new_gen(2*i-1,57+position)=abs(new_gen(2*i-1,57+position)-1);
-end
+sum_pos = s;
 
-if (new_gen(2*i,58:61)==forbid1)
-    position=randi([1,2]);
-    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
-end
-if (new_gen(2*i,58:61)==forbid2)
-    position=randi([1,2]);
-    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
-end
-if (new_gen(2*i,58:61)==forbid3)
-    position=randi([1,2]);
-    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
-end
-if (new_gen(2*i,58:61)==forbid4)
-    position=randi([1,2]);
-    new_gen(2*i,57+position)=abs(new_gen(2*i,57+position)-1);
-end
+z=1;
 
-% %Supress output 0 in Laminar flow tech
-% if (sum(new_gen(2*i-1,56:57))==0)
-%     position=randi([1,2]);
-%     new_gen(2*i-1,55+position)=abs(new_gen(2*i-1,55+position)-1);
-% end
-% if (sum(new_gen(2*i,56:57))==0)
-%     position=randi([1,2]);
-%     new_gen(2*i,55+position)=abs(new_gen(2*i,55+position)-1);
-% end
+%O=Output; I=Input
+for n = 1:length(bits_dis)
+    
+%n=1:4 - FIRST FOUR DISCRETE VARIABLES GENERALIZATION (COMPOSITES)
+%n=5 - 5TH DISCRETE VARIABLE GENERALIZATION (NUMBER OF ENGINES & POSITION)
+%n=6 - 6TH DISCRETE VARIABLE GENERALIZATION (LAMINAR FLOW TECHNOLOGY)
+%n=7 - 7TH DISCRETE VARIABLE GENERALIZATION (ENGINE TECHNOLOGY)
+    
+    s = sum_pos(z);
+    
+%Number of bits = 1; O=2; 
+%supress O=2(I=1)
+%     
+%     if bits_dis(n)==1
+%         t=1;
+%         if dis_cases(n)==1
+%             forbid2 = 1;
+%         
+%             if (new_gen(2*i-1,s:s+(t-1))==forbid2) 
+%                 position=randi([1,2]);
+%                 new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+%             end
+%         
+%             if (new_gen(2*i,s:s+(t-1))==forbid2)
+%                 position=randi([1,2]);
+%                 new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+%             end
+%         end
+%     end
+%     
+%Number of bits = 2; O=4;
+%supress O=4(I=3)
+    
+    if bits_dis(n)==2
+        u=2;
+        if dis_cases(n)==3
+            forbid4 = [1 0];
+        
+            if (new_gen(2*i-1,s:s+(u-1))==forbid4) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+        
+            if (new_gen(2*i,s:s+(u-1))==forbid4)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    end
+        
+%Number of bits = 3; O=8; 
+%supress O=6,7,8(I=5); supress O=7,8(I=6); supress O=8(I=7)
 
-% %Supress output 1 & 2 in engine position
-% if (sum(new_gen(2*i-1,60:62))==0) 
-%     position=randi([1,2]);
-%     new_gen(2*i-1,59+position)=abs(new_gen(2*i-1,59+position)-1);
-% end
-% if (new_gen(2*i-1,60:62)==forbid)
-%     position=randi([1,2]);
-%     new_gen(2*i-1,59+position)=abs(new_gen(2*i-1,59+position)-1);
-% end
-% if (sum(new_gen(2*i,60:62))==0) 
-%     position=randi([1,2]);
-%     new_gen(2*i,59+position)=abs(new_gen(2*i,59+position)-1);
-% end
-% if (new_gen(2*i,60:62)==forbid)
-%     position=randi([1,2]);
-%     new_gen(2*i,59+position)=abs(new_gen(2*i,59+position)-1);
-% end
+    if bits_dis(n)==3
+        v=3;   
+        if dis_cases(n)==5
+            forbid6 = [1 1 1]; forbid7 = [1 0 1]; forbid8 = [1 0 0];
+       
+            if (new_gen(2*i-1,s:s+(v-1))==forbid6) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(v-1))==forbid7) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(v-1))==forbid8) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+        
+            if (new_gen(2*i,s:s+(v-1))==forbid6)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(v-1))==forbid7)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(v-1))==forbid8)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+   
+        if dis_cases(n)==6
+            forbid7 = [1 0 1]; forbid8 = [1 0 0];
+       
+            if (new_gen(2*i-1,s:s+(v-1))==forbid7) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(v-1))==forbid8) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+        
+            if (new_gen(2*i,s:s+(v-1))==forbid7)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(v-1))==forbid8)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+   
+        if dis_cases(n)==7
+            forbid8 = [1 0 0];
+       
+            if (new_gen(2*i-1,s:s+(v-1))==forbid8) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+        
+            if (new_gen(2*i,s:s+(v-1))==forbid8)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    end
+
+%Number of bits = 4; O=16; 
+%supress O=10,11,12,13,14,15,16(I=9); supress O=11,12,13,14,15,16(I=10);
+%supress O=12,13,14,15,16(I=11); supress O=13,14,15,16(I=12);
+%supress O=14,15,16(I=13); supress O=15,16(I=14); supress O=16(I=15)
+
+    if bits_dis(n)==4
+        w=4;   
+        if dis_cases(n)==9
+            forbid10 = [1 1 0 1]; forbid11 = [1 1 1 1]; forbid12 = [1 1 1 0];
+            forbid13 = [1 0 1 0]; forbid14 = [1 0 1 1]; forbid15 = [1 0 0 1];
+            forbid16 = [1 0 0 0];
+       
+            if (new_gen(2*i-1,s:s+(w-1))==forbid10) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid11) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid12) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid13) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid14) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+        
+            if (new_gen(2*i,s:s+(w-1))==forbid10)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid11)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid12)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid13)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid14)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    
+        if dis_cases(n)==10
+            forbid11 = [1 1 1 1]; forbid12 = [1 1 1 0]; forbid13 = [1 0 1 0]; 
+            forbid14 = [1 0 1 1]; forbid15 = [1 0 0 1]; forbid16 = [1 0 0 0];
+       
+            if (new_gen(2*i-1,s:s+(w-1))==forbid11) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid12) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid13) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid14) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid11)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid12)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid13)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid14)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    
+        if dis_cases(n)==11
+            forbid12 = [1 1 1 0]; forbid13 = [1 0 1 0]; forbid14 = [1 0 1 1]; 
+            forbid15 = [1 0 0 1]; forbid16 = [1 0 0 0];
+       
+            if (new_gen(2*i-1,s:s+(w-1))==forbid12) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid13) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid14) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid12)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid13)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid14)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    
+        if dis_cases(n)==12
+            forbid13 = [1 0 1 0]; forbid14 = [1 0 1 1]; 
+            forbid15 = [1 0 0 1]; forbid16 = [1 0 0 0];
+       
+            if (new_gen(2*i-1,s:s+(w-1))==forbid13) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid14) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid13)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid14)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+    
+        if dis_cases(n)==13
+            forbid14 = [1 0 1 1]; forbid15 = [1 0 0 1]; 
+            forbid16 = [1 0 0 0];
+
+            if (new_gen(2*i-1,s:s+(w-1))==forbid14) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid14)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+
+        if dis_cases(n)==14
+            forbid15 = [1 0 0 1]; forbid16 = [1 0 0 0];
+
+            if (new_gen(2*i-1,s:s+(w-1))==forbid15) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid15)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end
+
+        if dis_cases(n)==15
+            forbid16 = [1 0 0 0];
+       
+            if (new_gen(2*i-1,s:s+(w-1))==forbid16) 
+                position=randi([1,2]);
+                new_gen(2*i-1,(s-1)+position)=abs(new_gen(2*i-1,(s-1)+position)-1);
+            end
+
+            if (new_gen(2*i,s:s+(w-1))==forbid16)
+                position=randi([1,2]);
+                new_gen(2*i,(s-1)+position)=abs(new_gen(2*i,(s-1)+position)-1);
+            end
+        end 
+    end 
+    z = z + 1;
+end
     
 end
-
-
-
 
 % end uniformx
 

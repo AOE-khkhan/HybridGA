@@ -69,21 +69,6 @@ fprintf(fid,'%s%6.2f%s\r\n','  WINL=', 0.0,', ');
 fprintf(fid,'%s%6.2f%s\r\n','  WNOZ=', 0.0,', ');
 fprintf(fid,'%s%6.2f%s\r\n','  WENG=', output.WENG,', ');
 
-% %DDF-no weight penalty
-% %GTF
-% if x_con(7)>=10.000 && x_con(7)<=20.000 && x_con(9)>=30.000 && x_con(9)<=50.000 && x_con(10)>=1.140 && x_con(10)<=1.240
-% fprintf(fid,'%s%6.2f%s\r\n','  WENG=', 1.050,', ');
-% %CRTF
-% elseif x_con(7)>=15.000 && x_con(7)<=25.000 && x_con(9)>=30.000 && x_con(9)<=50.000 && x_con(10)>=1.090 && x_con(10)<=1.190
-% fprintf(fid,'%s%6.2f%s\r\n','  WENG=', 1.075,', ');
-% %OR
-% elseif x_con(7)>=25.000 && x_con(7)<=35.000 && x_con(9)>=25.000 && x_con(9)<=45.000 && x_con(10)>=1.040 && x_con(10)<=1.140
-% fprintf(fid,'%s%6.2f%s\r\n','  WENG=', 1.100,', ');
-% %no tech
-% else x_con(10)>1.24 && x_con(10)<1.38
-% fprintf(fid,'%s%6.2f%s\r\n','  WENG=', 4.000,', ');
-% end
-
 fprintf(fid,'%s\r\n',' $END ');
 
 %% ------------------------------------------------------------------------
@@ -126,6 +111,12 @@ fprintf(fid,'%s\r\n',' $END ');
 fprintf(fid,'%s\r\n',' $COSTIN ');
 fprintf(fid,'%s%d%s\r\n','  ROI=', 7.0,', ');
 fprintf(fid,'%s%d%s\r\n','  FARE=', 0.10,', ');
+fprintf(fid,'%s%d%s%s\r\n','  DEVST=', 2010,'.',', ');
+fprintf(fid,'%s%d%s%s\r\n','  PLMQT=', 2015,'.',', ');
+fprintf(fid,'%s%d%s\r\n','  DYEAR=', 2017,', ');
+fprintf(fid,'%s%d%s%s\r\n','  TEMP=', 3321,'.',', ');
+fprintf(fid,'%s%2.1f%s\r\n','  FUELPR=', 2.2,', ');
+fprintf(fid,'%s%d%s\r\n','  NPOD=', output.NPOD,', ');
 % fprintf(fid,'%s%f%s\r\n','  FMCOMP=', output.FMCOMP,', ');
 % fprintf(fid,'%s%f%s\r\n','  FOCOMP=', output.FOCOMP,', ');
 fprintf(fid,'%s%2.1f%s\r\n','  FMWING=', output.FMWING,', ');

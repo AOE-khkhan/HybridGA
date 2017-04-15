@@ -203,32 +203,32 @@ switch engtech
         BPRDES = 5 + x_con(7)/2;
         TETDES = 3010 + x_con(8);
         OPRDES = 35 + x_con(9);
-        FPRDES = 1.38 + x_con(10);
-        WENG = 0;
+        FPRDES = 1.6 + x_con(10);
+        WENG = 0.80;
     case 2 %GTF
         BPRDES = 10 + x_con(7);
         TETDES = 3010 + x_con(8);
         OPRDES = 30 + x_con(9);
-        FPRDES = 1.14 + x_con(10);
-        WENG = 1.050;
-    case 3 %CRTF
+        FPRDES = 1.5 + x_con(10);
+        WENG = 0.85;
+    case 3 %CRTF/CRR
         BPRDES = 15 + x_con(7);
         TETDES = 3010 + x_con(8);
         OPRDES = 30 + x_con(9);
-        FPRDES = 1.09 + x_con(10);
-        WENG = 1.075;
+        FPRDES = 1.4 + x_con(10);
+        WENG = 0.90;
     case 4 %OR
         BPRDES = 25 + x_con(7);
         TETDES = 3010 + x_con(8);
         OPRDES = 25 + x_con(9);
-        FPRDES = 1.04 + x_con(10);
-        WENG = 1.100;
+        FPRDES = 1.3 + x_con(10);
+        WENG = 0.75;
 end
 %% Collect the information and store it in an object
 output.FCOMP = FCOMP;output.FRFU = FRFU;
 output.FRNA = FRNA;output.FRHT = FRHT;output.FRVT = FRVT;
 
-output.NEW = NEW;output.NEF = NEF;
+output.NEW = NEW;output.NEF = NEF; output.NPOD = NEW+NEF;
 
 output.XLLAM = XLLAM;
 output.TRUW = TRUW;output.TRLW =TRLW; 
