@@ -246,7 +246,7 @@ for generation = 1:max_gen+1,
             x0_con_hat = (x0_con - lb_con)./(ub_con-lb_con);
             lb_con_hat = zeros(num_con,1);
             ub_con_hat = ones(num_con,1);
-            options = optimset('Display','off','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
+            options = optimset('Display','iter','Algorithm','active-set','FinDiffRelStep',5e-3); %optimset('Display','iter','Algorithm','active-set');
 %             options = optimset('Algorithm','active-set'); %For parfor
             try
                 [x_con_hat,fval,~,exitflag,output]=fgoalattain(@(x_con_hat) objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename),...
