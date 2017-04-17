@@ -64,6 +64,11 @@ fprintf(fid,'%s%2.1f%s\r\n','  FRFU=', output.FRFU,', ');
 fprintf(fid,'%s%2.1f%s\r\n','  FRNA=', output.FRNA,', ');
 fprintf(fid,'%s%2.1f%s\r\n','  WAC=', output.WAC,', ');
 
+% Engine technology modeling
+fprintf(fid,'%s%6.2f%s\r\n','  WINL=', 0.0,', ');
+fprintf(fid,'%s%6.2f%s\r\n','  WNOZ=', 0.0,', ');
+fprintf(fid,'%s%6.2f%s\r\n','  WENG=', output.WENG,', ');
+
 fprintf(fid,'%s\r\n',' $END ');
 
 %% ------------------------------------------------------------------------
@@ -106,6 +111,12 @@ fprintf(fid,'%s\r\n',' $END ');
 fprintf(fid,'%s\r\n',' $COSTIN ');
 fprintf(fid,'%s%d%s\r\n','  ROI=', 7.0,', ');
 fprintf(fid,'%s%d%s\r\n','  FARE=', 0.10,', ');
+fprintf(fid,'%s%d%s%s\r\n','  DEVST=', 2010,'.',', ');
+fprintf(fid,'%s%d%s%s\r\n','  PLMQT=', 2015,'.',', ');
+fprintf(fid,'%s%d%s\r\n','  DYEAR=', 2017,', ');
+fprintf(fid,'%s%d%s%s\r\n','  TEMP=', 3321,'.',', ');
+fprintf(fid,'%s%2.1f%s\r\n','  FUELPR=', 2.2,', ');
+fprintf(fid,'%s%d%s\r\n','  NPOD=', output.NPOD,', ');
 % fprintf(fid,'%s%f%s\r\n','  FMCOMP=', output.FMCOMP,', ');
 % fprintf(fid,'%s%f%s\r\n','  FOCOMP=', output.FOCOMP,', ');
 fprintf(fid,'%s%2.1f%s\r\n','  FMWING=', output.FMWING,', ');
@@ -127,9 +138,21 @@ fprintf(fid,'%s\r\n',' $END ');
 fprintf(fid,'%s\r\n',' $ENGINE ');
 
 fprintf(fid,'%s\r\n','  IENG=2, IPRINT=0, ');
-fprintf(fid,'%s%7.5f%s\r\n','  OPRDES=', 29.5,', ');
-fprintf(fid,'%s%7.5f%s\r\n','  FPRDES=', 1.67,', ');
-fprintf(fid,'%s%7.5f%s\r\n','  TETDES=', 2660.0,', ');
+% <<<<<<< HEAD
+% fprintf(fid,'%s%7.5f%s\r\n','  OPRDES=', 29.5,', ');
+% fprintf(fid,'%s%7.5f%s\r\n','  FPRDES=', 1.67,', ');
+% fprintf(fid,'%s%7.5f%s\r\n','  TETDES=', 2660.0,', ');
+
+
+% Engine technology modeling
+fprintf(fid,'%s%7.5f%s\r\n','  BPRDES=', output.BPRDES,', ');
+fprintf(fid,'%s%7.5f%s\r\n','  TETDES=', output.TETDES,', ');
+fprintf(fid,'%s%7.5f%s\r\n','  OPRDES=', output.OPRDES,', ');
+fprintf(fid,'%s%7.5f%s\r\n','  FPRDES=', output.FPRDES,', ');
+    
+% fprintf(fid,'%s%7.5f%s\r\n','  OPRDES=', 29.5,', ');
+% fprintf(fid,'%s%7.5f%s\r\n','  FPRDES=', 1.67,', ');
+% fprintf(fid,'%s%7.5f%s\r\n','  TETDES=', 2660.0,', ');
 
 fprintf(fid,'%s\r\n',' $END ');
 

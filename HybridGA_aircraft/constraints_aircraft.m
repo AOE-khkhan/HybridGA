@@ -1,9 +1,12 @@
-function [g, h] = constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename)
+
+function [g, h] = constraints_aircraft(x_con,x_dis,lb_con,ub_con,Filename)
+
+%function [g, h] = constraints_aircraft(x_con_hat,x_dis, lb_con,ub_con,Filename)
 %counter=0;
-if size(x_con_hat,1)>1
-    x_con_hat = x_con_hat';
-end
-x_con = lb_con + x_con_hat.*(ub_con-lb_con);
+% if size(x_con_hat,1)>1
+%     x_con_hat = x_con_hat';
+% end
+% x_con = lb_con + x_con_hat.*(ub_con-lb_con);
 
 %calling FLOPS and getting Outputs
 Inputs.seats = 162;
@@ -23,7 +26,8 @@ end
 
 TD = 10000;
 LD = 10000;
-if nan_count == 0 && ac_count == 4
+
+if nan_count == 0 && ac_count == 3
 	TD = Outputs.TD;
     LD = Outputs.LD;
 else

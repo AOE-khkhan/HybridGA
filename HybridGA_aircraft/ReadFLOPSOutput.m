@@ -47,21 +47,21 @@ while ~feof(fid) && nan_count==0
                 break
             end
         end
-        %% Read ticket price data
-        %nan_count=0;
-        if length(tline)>29 && strcmp(tline(1:29),' FOR AN ROI OF  7.000 PERCENT')==1% && count == 0
-            acdata_count = acdata_count + 1;
-            try
-                [~,~,~,~,~,~,~,~,FARE,~] = textread(fname,'%s%s%s%s%f%s%s%s%f%s',1,'headerlines',nlines-1);
-                if isnan(FARE)==1
-					nan_count=nan_count+1;
-					break
-				end
-            catch
-                nan_count=nan_count+1;
-                break
-            end
-        end
+%         %% Read ticket price data
+%         %nan_count=0;
+%         if length(tline)>29 && strcmp(tline(1:29),' FOR AN ROI OF  7.000 PERCENT')==1% && count == 0
+%             acdata_count = acdata_count + 1;
+%             try
+%                 [~,~,~,~,~,~,~,~,FARE,~] = textread(fname,'%s%s%s%s%f%s%s%s%f%s',1,'headerlines',nlines-1);
+%                 if isnan(FARE)==1
+% 					nan_count=nan_count+1;
+% 					break
+% 				end
+%             catch
+%                 nan_count=nan_count+1;
+%                 break
+%             end
+%         end
         %% Read take-off, landing data
         %nan_count=0;
         if length(tline)>15 && strcmp(tline(1:15),'#OBJ/VAR/CONSTR')==1 && count == 0

@@ -7,7 +7,9 @@ function [output] = analyze_discrete(x_con,x_dis)
 %    2 - 0/1 for fuselage
 %    3 - 0/1 for nacelle
 %    4 - 0/1 for tail
+
 % 2. Position and number of engine/s x_dis(5)
+
 %    1 - 2 wing 
 %    2 - 2 fuselage 
 %    3 - 2 wing + 1 fuselage
@@ -17,6 +19,7 @@ function [output] = analyze_discrete(x_con,x_dis)
 %    7 - 1 fuselage
 %    8 - 4 wing + 1 fuselage
 % 3. Laminar flow technologies x_des(6)
+
 %    1 - No laminar flow technologies
 %    2 - NLF wing
 %    3 - HLFC wing
@@ -29,6 +32,12 @@ function [output] = analyze_discrete(x_con,x_dis)
 %   10 - NLF wing + HLFC tail
 %   11 - NLF wing + HLFC nacelle
 %   12 - NLF wing + HLFC tail + HLFC nacelle
+
+% 4. Engine Technologies: x_dis(7)
+%    1 - DDF
+%    2 - GTF
+%    3 - CRTF
+%    4 - OR
 %% Composites
 xcomp = x_dis(1:4);
 FCOMP = 0.0; FRFU = 1.0; FRNA = 1.0; FRHT = 1.0; FRVT = 1.0;
@@ -192,11 +201,39 @@ switch xltech
         FOAC = 1.5;
 end
 
+%% Engine Technologies
+engtech = x_dis(7);
+switch engtech
+    case 1 %DDF
+        BPRDES = 5 + x_con(7)/2;
+        TETDES = 3010 + x_con(8);
+        OPRDES = 35 + x_con(9);
+        FPRDES = 1.6 + x_con(10);
+        WENG = 0.80;
+    case 2 %GTF
+        BPRDES = 10 + x_con(7);
+        TETDES = 3010 + x_con(8);
+        OPRDES = 30 + x_con(9);
+        FPRDES = 1.5 + x_con(10);
+        WENG = 0.85;
+    case 3 %CRTF/CRR
+        BPRDES = 15 + x_con(7);
+        TETDES = 3010 + x_con(8);
+        OPRDES = 30 + x_con(9);
+        FPRDES = 1.4 + x_con(10);
+        WENG = 0.90;
+    case 4 %OR
+        BPRDES = 25 + x_con(7);
+        TETDES = 3010 + x_con(8);
+        OPRDES = 25 + x_con(9);
+        FPRDES = 1.3 + x_con(10);
+        WENG = 0.75;
+end
 %% Collect the information and store it in an object
 output.FCOMP = FCOMP;output.FRFU = FRFU;
 output.FRNA = FRNA;output.FRHT = FRHT;output.FRVT = FRVT;
 
-output.NEW = NEW;output.NEF = NEF;
+output.NEW = NEW;output.NEF = NEF; output.NPOD = NEW+NEF;
 
 output.XLLAM = XLLAM;
 output.TRUW = TRUW;output.TRLW =TRLW; 
@@ -209,6 +246,11 @@ output.TRUV = TRUV;output.TRLV = TRLV;
 output.FMTAIL = FMTAIL;output.FOAC = FOAC;
 
 
+=======
+output.BPRDES = BPRDES; output.TETDES = TETDES;
+output.OPRDES = OPRDES; output.FPRDES = FPRDES;
+output.WENG = WENG;
+>>>>>>> d756537166b88afba233ed14c3b962140d28f3f8
 
 function [TRUW] = laminarflow_code(x_con,flag)
 

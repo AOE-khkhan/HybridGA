@@ -1,8 +1,10 @@
-function f = objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename)
-if size(x_con_hat,1)>1
-    x_con_hat = x_con_hat';
-end
-x_con = lb_con + x_con_hat.*(ub_con-lb_con);
+function f = objfunc_aircraft(x_con,x_dis,lb_con,ub_con,Filename)
+
+%function f = objfunc_aircraft(x_con_hat,x_dis,lb_con,ub_con,Filename)
+% if size(x_con_hat,1)>1
+%     x_con_hat = x_con_hat';
+% end
+% x_con = lb_con + x_con_hat.*(ub_con-lb_con);
 
 %calling FLOPS and getting Outputs
 Inputs.seats = 162;
@@ -21,26 +23,22 @@ end
 [Outputs,nan_count,ac_count] = ReadFLOPSOutput(Filename);
 
 FUEL = 55000;
-NOX = 650;
-FARE = 1e3;
-if nan_count==0 && ac_count == 4
+NOX = 1000;
+TOC = 1e5;
+if nan_count==0 && ac_count == 3
     %multi-objective functions
     FUEL = Outputs.FUEL;
+    TOC = Outputs.TOC;
     NOX = Outputs.NOX;
-    FARE = Outputs.FARE;
 else
 %     fprintf('\n%s\n','Mission failed!')
 end
 % Fitness Functions
 phi1 = FUEL;
-phi2 = FARE;
-%phi3 = FARE;
 
-%phi4 = TOC;
+phi2 = NOX;
+phi3 = TOC;
 
-f = [phi1 phi2]; %1. fuel burn vs NOx
-%f = [phi1 phi3]; %2. fuel burn vs ticket price
-%f = [phi2 phi3]; %3. NOx vs ticket price
-
-
-%f = [phi1 phi4]; %check
+%f = [phi1 phi3]; %1. Fuel burn vs TOC
+f = [phi1 phi2]; %2. Fuel burn vs NOx
+%f = [phi2 phi3]; %3. NOx vs TOC
